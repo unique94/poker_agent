@@ -68,19 +68,19 @@ function updatePlayerInputs() {
                 </div>
                 <div class="bet-input-group">
                     <label>翻前</label>
-                    <input type="number" id="player${i}preflop" placeholder="0" min="0">
+                    <input type="text" id="player${i}preflop" placeholder="动作">
                 </div>
                 <div class="bet-input-group">
                     <label>翻牌</label>
-                    <input type="number" id="player${i}flop" placeholder="0" min="0">
+                    <input type="text" id="player${i}flop" placeholder="动作">
                 </div>
                 <div class="bet-input-group">
                     <label>转牌</label>
-                    <input type="number" id="player${i}turn" placeholder="0" min="0">
+                    <input type="text" id="player${i}turn" placeholder="动作">
                 </div>
                 <div class="bet-input-group">
                     <label>河牌</label>
-                    <input type="number" id="player${i}river" placeholder="0" min="0">
+                    <input type="text" id="player${i}river" placeholder="动作">
                 </div>
                 ${holeCardsHtml}
             </div>
@@ -112,10 +112,10 @@ async function setupTable() {
         const chips = parseInt(document.getElementById(`player${i}chips`).value);
         const isDealer = document.getElementById(`player${i}dealer`).checked;
         const bets = {
-            preflop: parseInt(document.getElementById(`player${i}preflop`).value) || 0,
-            flop: parseInt(document.getElementById(`player${i}flop`).value) || 0,
-            turn: parseInt(document.getElementById(`player${i}turn`).value) || 0,
-            river: parseInt(document.getElementById(`player${i}river`).value) || 0
+            preflop: document.getElementById(`player${i}preflop`).value || '',
+            flop: document.getElementById(`player${i}flop`).value || '',
+            turn: document.getElementById(`player${i}turn`).value || '',
+            river: document.getElementById(`player${i}river`).value || ''
         };
         
         const holeCards = i === 0 ? {
@@ -254,10 +254,10 @@ async function requestAdvice() {
         const chips = parseInt(document.getElementById(`player${i}chips`).value);
         const isDealer = document.getElementById(`player${i}dealer`).checked;
         const bets = {
-            preflop: parseInt(document.getElementById(`player${i}preflop`).value) || 0,
-            flop: parseInt(document.getElementById(`player${i}flop`).value) || 0,
-            turn: parseInt(document.getElementById(`player${i}turn`).value) || 0,
-            river: parseInt(document.getElementById(`player${i}river`).value) || 0
+            preflop: document.getElementById(`player${i}preflop`).value || '',
+            flop: document.getElementById(`player${i}flop`).value || '',
+            turn: document.getElementById(`player${i}turn`).value || '',
+            river: document.getElementById(`player${i}river`).value || ''
         };
         
         const holeCards = i === 0 ? {
@@ -283,16 +283,21 @@ async function requestAdvice() {
         return;
     }
 
+    const requestData = {
+        players: players,
+        cards: cards
+    };
+    
+    // 添加这行来查看发送的数据
+    console.log('Sending data to backend:', requestData);
+
     try {
         const response = await fetch('/get-advice', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                players: players,
-                cards: cards
-            })
+            body: JSON.stringify(requestData)
         });
 
         const result = await response.json();
@@ -498,4 +503,61 @@ function initializeCardInputs() {
                 .forEach(btn => btn.classList.remove('selected'));
         });
     });
+}
+
+async function resetGame() {
+    try {
+        const response = await fetch('/reset-game', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            // 清空所有行动输入
+            const playerCount = parseInt(document.getElementById('playerCount').value);
+            for (let i = 0; i < playerCount; i++) {
+                // 保持玩家基本信息（名字、筹码、庄家位置）
+                document.getElementById(`player${i}preflop`).value = '';
+                document.getElementById(`player${i}flop`).value = '';
+                document.getElementById(`player${i}turn`).value = '';
+                document.getElementById(`player${i}river`).value = '';
+            }
+            
+            // 清空公共牌
+            document.querySelectorAll('.community-cards .card-input').forEach(input => {
+                input.value = '';
+            });
+            
+            // 清空主玩家的底牌
+            if (document.getElementById('player0card1')) {
+                document.getElementById('player0card1').value = '';
+                document.getElementById('player0card2').value = '';
+            }
+            
+            // 清空建议内容
+            const adviceContent = document.getElementById('adviceContent');
+            if (adviceContent) {
+                const placeholder = adviceContent.querySelector('.advice-placeholder');
+                const resultDiv = adviceContent.querySelector('.advice-result');
+                
+                if (placeholder) {
+                    placeholder.style.display = 'block';
+                }
+                if (resultDiv) {
+                    resultDiv.style.display = 'none';
+                }
+            }
+            
+            alert('新的一手已开始！');
+        } else {
+            alert('重置失败：' + result.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('发生错误：' + error.message);
+    }
 } 

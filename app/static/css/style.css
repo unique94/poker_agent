@@ -280,7 +280,7 @@ body {
 }
 
 /* 按钮样式 */
-.start-button, .advice-button {
+.reset-button, .advice-button {
     background: #2c3e50;
     color: white;
     padding: 0.75rem;
@@ -539,4 +539,19 @@ button:disabled {
     overflow-x: auto;
     display: block;
     width: 100%;
+}
+
+/* 添加分隔线和按钮间距样式 */
+.button-separator {
+    height: 1px;
+    background-color: #ddd;
+    margin: 15px 0;  /* 上下各添加15px的间距 */
+}
+
+.advice-button {
+    margin-bottom: 0;  /* 移除之前可能存在的底部间距 */
+}
+
+.reset-button {
+    margin-top: 0;    /* 移除之前可能存在的顶部间距 */
 } 

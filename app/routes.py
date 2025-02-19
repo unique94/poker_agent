@@ -2,6 +2,8 @@ from flask import render_template, request, jsonify
 from app import db
 from app.services.poker_service import PokerService
 
+poker_service = PokerService()
+
 def init_app(app):
     @app.route('/')
     def index():
@@ -82,6 +84,21 @@ def init_app(app):
             return jsonify({
                 'success': True,
                 'data': advice
+            })
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': str(e)
+            }), 400
+    
+    @app.route('/reset-game', methods=['POST'])
+    def reset_game():
+        """重置游戏状态的路由"""
+        try:
+            poker_service.reset_game()
+            return jsonify({
+                'success': True,
+                'message': '游戏已重置'
             })
         except Exception as e:
             return jsonify({

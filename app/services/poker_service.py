@@ -241,8 +241,9 @@ class PokerService:
             prompt += "\n\n4. 玩家行动信息："
             for i, player in enumerate(players):
                 prompt += f"\n- 玩家：{player['name']}"
-                prompt += f"\n  行动：{player['actions']}"
+                prompt += f"\n  行动：{player['bets']}"
 
+            prompt += "\n\n5. 现在行动到我，我应该怎么做？"
 
             # 添加提问
             if (self.isNewHand):
