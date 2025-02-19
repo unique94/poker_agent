@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}德扑策略模拟器{% endblock %}
+
+{% block content %}
+<div class="poker-simulator">
+    <div class="left-panel">
+        <div class="player-controls">
+            <div class="player-count-control">
+                <label for="playerCount">玩家数量:</label>
+                <select id="playerCount" onchange="updatePlayerInputs()">
+                    <option value="4">4人桌</option>
+                    <option value="5">5人桌</option>
+                    <option value="6" selected>6人桌</option>
+                    <option value="7">7人桌</option>
+                    <option value="8">8人桌</option>
+                    <option value="9">9人桌</option>
+                    <option value="10">10人桌</option>
+                </select>
+            </div>
+            <div id="playerInputs" class="player-list">
+                <!-- 玩家输入区域将由 JavaScript 动态生成 -->
+                <!-- 示例玩家输入结构:
+                <div class="player-input">
+                    <div class="player-info">
+                        <input type="text" class="player-name" placeholder="玩家名称">
+                        <div class="dealer-checkbox">
+                            <input type="checkbox" class="is-dealer" name="dealer">
+                            <label>庄家</label>
+                        </div>
+                    </div>
+                    <div class="player-cards">
+                        <input type="text" class="card-input" readonly>
+                        <input type="text" class="card-input" readonly>
+                    </div>
+                </div>
+                -->
+            </div>
+            
+            <!-- 移除开始游戏按钮，只保留建议栏 -->
+            <div class="strategy-advice">
+                <h2>策略建议</h2>
+                <div id="adviceContent" class="advice-content">
+                    <div class="advice-placeholder">
+                        <p>填写玩家信息和牌面后点击获取建议</p>
+                    </div>
+                    <div class="advice-result" style="display: none;">
+                        <div class="advice-section">
+                            <h3>场景分析</h3>
+                            <pre class="scene-analysis"></pre>
+                        </div>
+                        <div class="advice-section">
+                            <h3>策略建议</h3>
+                            <pre class="strategy-suggestion"></pre>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="requestAdvice()" class="advice-button">获取建议</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="center-panel">
+        <div class="poker-table">
+            <div class="table-felt">
+                <div class="community-cards">
+                    <div class="card-group">
+                        <div class="card-row">
+                            <span class="card-label">Flop</span>
+                            <input type="text" class="card-input" readonly>
+                            <input type="text" class="card-input" readonly>
+                            <input type="text" class="card-input" readonly>
+                        </div>
+                    </div>
+                    <div class="card-group">
+                        <div class="card-row">
+                            <span class="card-label">Turn</span>
+                            <input type="text" class="card-input" readonly>
+                        </div>
+                    </div>
+                    <div class="card-group">
+                        <div class="card-row">
+                            <span class="card-label">River</span>
+                            <input type="text" class="card-input" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="right-panel">
+    </div>
+</div>
+
+<!-- 卡牌选择器模态框 -->
+<div id="cardPickerModal" class="card-picker-modal">
+    <div class="card-picker-content">
+        <div class="suit-section">
+            <div class="suit-row">
+                <button class="suit-btn" data-suit="♠">♠</button>
+                <button class="suit-btn" data-suit="♥">♥</button>
+                <button class="suit-btn" data-suit="♣">♣</button>
+                <button class="suit-btn" data-suit="♦">♦</button>
+            </div>
+        </div>
+        <div class="rank-section">
+            <div class="rank-row">
+                <button class="rank-btn" data-rank="A">A</button>
+                <button class="rank-btn" data-rank="K">K</button>
+                <button class="rank-btn" data-rank="Q">Q</button>
+                <button class="rank-btn" data-rank="J">J</button>
+            </div>
+            <div class="rank-row">
+                <button class="rank-btn" data-rank="T">10</button>
+                <button class="rank-btn" data-rank="9">9</button>
+                <button class="rank-btn" data-rank="8">8</button>
+                <button class="rank-btn" data-rank="7">7</button>
+            </div>
+            <div class="rank-row">
+                <button class="rank-btn" data-rank="6">6</button>
+                <button class="rank-btn" data-rank="5">5</button>
+                <button class="rank-btn" data-rank="4">4</button>
+                <button class="rank-btn" data-rank="3">3</button>
+            </div>
+            <div class="rank-row">
+                <button class="rank-btn" data-rank="2">2</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
