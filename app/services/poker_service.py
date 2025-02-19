@@ -3,6 +3,7 @@ from datetime import datetime
 class PokerService:
     def __init__(self):
         self.current_game = None
+        self.isNewHand = True
         self.positions = []
         self.action_history = []  # 添加行动历史存储
 
@@ -205,7 +206,8 @@ class PokerService:
             positions = self._get_position(players)
             
             # 构建场景描述
-            prompt = f"""在一个{player_count}人的德州扑克现金局中：
+            if (self.isNewHand):
+                prompt = f"""在一个{player_count}人的德州扑克现金局中：
 
 1. 基本信息：
 - 你的位置：{positions[0]}
@@ -233,9 +235,18 @@ class PokerService:
                     prompt += f"\n转牌：{cards['turn']}"
                 if cards['river']:
                     prompt += f"\n河牌：{cards['river']}"
-        
+            
+            print(players)
+            # 添加玩家行动信息
+            prompt += "\n\n4. 玩家行动信息："
+            for i, player in enumerate(players):
+                prompt += f"\n- 玩家：{player['name']}"
+                prompt += f"\n  行动：{player['actions']}"
+
+
             # 添加提问
-            prompt += """
+            if (self.isNewHand):
+                prompt += """
 
 请根据以上信息，给出详细的策略建议，包括：
 1. 这手牌在当前位置的打法建议
@@ -243,60 +254,16 @@ class PokerService:
 3. 需要注意的关键点
 4. 如果遇到加注或反加注，应该如何应对"""
 
+            self.isNewHand = False
             return prompt
 
         except Exception as e:
             raise Exception(f"生成 prompt 时出错: {str(e)}") 
 
-    def record_action(self, player_index, action_type, amount=0):
-        """
-        记录玩家行动
-        
-        Args:
-            player_index (int): 玩家在players列表中的索引
-            action_type (str): 行动类型 ('raise', 'call', 'fold', 'check')
-            amount (int): 行动金额（如果适用）
-        """
-        if not self.current_game:
-            raise ValueError("游戏尚未开始")
-
-        player = self.current_game['players'][player_index]
-        
-        action = {
-            'stage': self.current_game.get('current_round', 'preflop'),
-            'type': action_type,
-            'amount': amount,
-            'timestamp': datetime.now().isoformat()
-        }
-
-        # 如果玩家还没有action_history，创建一个新的
-        if 'action_history' not in player:
-            player['action_history'] = []
-        
-        player['action_history'].append(action)
-        self.action_history.append({
-            'player_index': player_index,
-            'player_name': player['name'],
-            'action': action
-        })
-
-    def move_to_next_stage(self):
-        """
-        进入下一个游戏阶段
-        """
-        stages = ['preflop', 'flop', 'turn', 'river']
-        current_stage = self.current_game.get('current_round', 'preflop')
-        
-        try:
-            next_stage_index = stages.index(current_stage) + 1
-            if next_stage_index < len(stages):
-                self.current_game['current_round'] = stages[next_stage_index]
-        except ValueError:
-            self.current_game['current_round'] = 'preflop'
-
     def reset_game(self):
         """
         重置游戏状态
         """
+        self.isNewHand = True
         self.current_game = None
         self.action_history = [] 
