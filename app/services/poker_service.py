@@ -1,4 +1,6 @@
 from datetime import datetime
+import os
+# import openai
 
 class PokerService:
     def __init__(self):
@@ -6,6 +8,10 @@ class PokerService:
         self.isNewHand = True
         self.positions = []
         self.action_history = []  # 添加行动历史存储
+        # 初始化 OpenAI API key
+        self.endpoint = "https://onlypokerai.openai.azure.com/"
+        self.deployment = "gpt-4"
+        self.subKey = ""
 
     def setup_game(self, players):
         """
@@ -93,6 +99,36 @@ class PokerService:
             'total_chips': sum(player['chips'] for player in players)
         }
 
+    def _get_llm_advice(self, prompt):
+        """
+        调用 LLM 获取策略建议
+        
+        Args:
+            prompt (str): 包含游戏场景描述的提示文本
+            
+        Returns:
+            str: LLM 返回的策略建议
+        """
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "你是一位专业的德州扑克教练，精通GTO理论和实战策略。你需要根据场景信息，给出详细的策略建议。"},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=1000
+            )
+            
+            # 提取建议内容
+            advice = response.choices[0].message.content.strip()
+            
+            return advice
+            
+        except Exception as e:
+            print(f"获取 LLM 建议时出错: {str(e)}")
+            raise Exception(f"获取策略建议失败: {str(e)}")
+
     def get_advice(self, players, cards):
         """
         根据玩家信息和牌面信息生成策略建议
@@ -104,6 +140,9 @@ class PokerService:
             # 生成完整的场景描述
             prompt = self._get_bet_prompt(players, cards, stage)
             
+            # 获取 LLM 建议
+            # advice = self._get_llm_advice(prompt)
+            
             # 打印详细信息用于调试
             print("\n" + "="*50)
             print("德州扑克策略分析")
@@ -111,6 +150,9 @@ class PokerService:
             print("\n【生成的 Prompt】")
             print("-"*50)
             print(prompt)
+            # print("\n【LLM 建议】")
+            # print("-"*50)
+            # print(advice)
             
             # 返回结果
             data = {
@@ -126,8 +168,6 @@ class PokerService:
     def _get_position(self, players):
         """
         确定主玩家的位置
-        
-        位置顺序从庄家按逆时针方向：BTN -> SB -> BB -> UTG -> UTG+1 -> MP -> HJ -> CO
         """
         player_count = len(players)
         # 获取该玩家数量下的位置列表
@@ -135,44 +175,39 @@ class PokerService:
         
         dealer_index = next((i for i, p in enumerate(players) if p['isDealer']), -1)
         
-        # 根据庄家位置重新排列位置名称
-        # 将位置列表旋转，使庄家位置（BTN）对应dealer_index
-        rotated_positions = positions[len(players)-dealer_index:] + positions[:len(players)-dealer_index]
-        
-        # 返回每个玩家对应的位置
-        return rotated_positions
+        # 返回dealer_index
+        return positions, dealer_index
 
     def _get_position_names(self, player_count):
         """
         根据玩家数量返回位置名称列表
         从庄家位置(BTN)开始逆时针排列
         
-        2人桌：BTN/SB, BB
-        3人桌：BTN, SB, BB
-        4人桌：BTN, SB, BB, UTG
-        5人桌：BTN, SB, BB, UTG, CO
-        6人桌：BTN, SB, BB, UTG, HJ, CO
-        7人桌：BTN, SB, BB, UTG, MP, HJ, CO
-        8人桌：BTN, SB, BB, UTG, UTG+1, MP, HJ, CO
-        9人桌：BTN, SB, BB, UTG, UTG+1, UTG+2, MP, HJ, CO
+        3人桌：SB, BB, BTN
+        4人桌：SB, BB, UTG, BTN
+        5人桌：SB, BB, UTG, CO, BTN
+        6人桌：SB, BB, UTG, HJ, CO, BTN
+        7人桌：SB, BB, UTG, MP, HJ, CO, BTN
+        8人桌：SB, BB, UTG, UTG+1, MP, HJ, CO, BTN
+        9人桌：SB, BB, UTG, UTG+1, UTG+2, MP, HJ, CO, BTN
         """
         if player_count < 3 or player_count > 9:
             return []
 
         if player_count == 3:
-            positions = ['BTN', 'SB', 'BB']
+            positions = ['SB', 'BB', 'BTN']
         elif player_count == 4:
-            positions = ['BTN', 'SB', 'BB', 'UTG']
+            positions = ['SB', 'BB', 'UTG', 'BTN']
         elif player_count == 5:
-            positions = ['BTN', 'SB', 'BB', 'UTG', 'CO']
+            positions = ['SB', 'BB', 'UTG', 'CO', 'BTN']
         elif player_count == 6:
-            positions = ['BTN', 'SB', 'BB', 'UTG', 'HJ', 'CO']
+            positions = ['SB', 'BB', 'UTG', 'HJ', 'CO', 'BTN']
         elif player_count == 7:
-            positions = ['BTN', 'SB', 'BB', 'UTG', 'MP', 'HJ', 'CO']
+            positions = ['SB', 'BB', 'UTG', 'MP', 'HJ', 'CO', 'BTN']
         elif player_count == 8:
-            positions = ['BTN', 'SB', 'BB', 'UTG', 'UTG+1', 'MP', 'HJ', 'CO']
+            positions = ['SB', 'BB', 'UTG', 'UTG+1', 'MP', 'HJ', 'CO', 'BTN']
         elif player_count == 9:
-            positions = ['BTN', 'SB', 'BB', 'UTG', 'UTG+1', 'UTG+2', 'MP', 'HJ', 'CO']
+            positions = ['SB', 'BB', 'UTG', 'UTG+1', 'UTG+2', 'MP', 'HJ', 'CO', 'BTN']
         
         # 确保返回的位置数量与玩家数量相匹配
         return positions
@@ -202,26 +237,44 @@ class PokerService:
         try:
             # 获取主要信息
             player_count = len(players)
-            main_player = players[0]
-            positions = self._get_position(players)
+
+            positions, dealer_index = self._get_position(players)
+            print(f"庄家位置：{dealer_index}")
+            sb_player_idx = (dealer_index + 1) % len(players)
+            rotated_players = players[sb_player_idx:] + players[:sb_player_idx]
+
+            for i, player in enumerate(rotated_players):
+                player['position_name'] = positions[i]
+                        
+
+            main_player_new_idx = player_count - sb_player_idx
+            print(main_player_new_idx)
             
             # 构建场景描述
             if (self.isNewHand):
-                prompt = f"""在一个{player_count}人的德州扑克现金局中：
+                prompt = f"""我希望你扮演一个经验老道的德州扑克职业玩家，参与我们的带有娱乐性质的德州扑克现金局。
+我们参与的玩家有一个特点，非常喜欢limp进来看翻牌。4倍以下的加注大多数都是无效的，大家都会call。而且因为你的加入，大家都知道你是AI玩家，大家会更多的bluff你。
+我希望你能采取正确的策略，剥削其他玩家，赢得游戏。
+现在的游戏人数是：{player_count}人：
 
 1. 基本信息：
-- 你的位置：{positions[0]}
-- 你的筹码：{main_player['chips']}
-- 你的底牌：{main_player['holeCards']['card1']} {main_player['holeCards']['card2']}
+- 你的位置：{rotated_players[main_player_new_idx]['position_name']}
+- 你的筹码：{rotated_players[main_player_new_idx]['chips']}
+- 你的底牌：{rotated_players[main_player_new_idx]['holeCards']['card1']} {rotated_players[main_player_new_idx]['holeCards']['card2']}
 
 2. 其他玩家信息："""
 
             # 添加其他玩家信息
-            for i, player in enumerate(players[1:], 1):
-                prompt += f"""
-- 玩家：{player['name']}
-  筹码：{player['chips']}
-  位置：{positions[i]}"""
+            for i, player in enumerate(rotated_players):
+                if (i == main_player_new_idx):
+                    prompt += f"""
+- 位置：{positions[i]}
+  这个玩家是你"""
+                else:
+                    prompt += f"""
+- 位置：{positions[i]}
+  玩家姓名：{player['name']}
+  筹码：{player['chips']}"""
 
             # 添加公共牌信息
             prompt += "\n\n3. 当前牌面信息："
@@ -236,12 +289,58 @@ class PokerService:
                 if cards['river']:
                     prompt += f"\n河牌：{cards['river']}"
             
-            print(players)
+
             # 添加玩家行动信息
-            prompt += "\n\n4. 玩家行动信息："
-            for i, player in enumerate(players):
-                prompt += f"\n- 玩家：{player['name']}"
-                prompt += f"\n  行动：{player['bets']}"
+            prompt += "\n\n4. 玩家行动信息(对于已经fold的玩家，之后的行动信息会留空)："
+            if stage == 'preflop':
+                prompt += "\n翻前下注"
+                for i, player in enumerate(rotated_players):
+                    actionInfo = player['bets']['preflop']
+                    prompt += f"\n- 位置：{player['position_name']}, 玩家姓名：{player['name']}, 行动：{actionInfo}"
+
+            elif stage == 'flop':
+                prompt += "\n翻前下注"
+                for i, player in enumerate(rotated_players):
+                    actionInfo = player['bets']['preflop']
+                    prompt += f"\n- 位置：{player['position_name']}, 玩家姓名：{player['name']}, 行动：{actionInfo}"
+                prompt += "\n\n翻牌后下注"
+                for i, player in enumerate(rotated_players):
+                    actionInfo = player['bets']['flop']
+                    prompt += f"\n- 位置：{player['position_name']}, 玩家姓名：{player['name']}, 行动：{actionInfo}"
+
+            elif stage == 'turn':
+                prompt += "\n翻前下注"
+                for i, player in enumerate(rotated_players):
+                    actionInfo = player['bets']['preflop']
+                    prompt += f"\n- 位置：{player['position_name']}, 玩家姓名：{player['name']}, 行动：{actionInfo}"
+                prompt += "\n\n转牌后下注"
+                for i, player in enumerate(rotated_players):
+                    actionInfo = player['bets']['flop']
+                    prompt += f"\n- 位置：{player['position_name']}, 玩家姓名：{player['name']}, 行动：{actionInfo}"
+                prompt += "\n\n河牌后下注"
+                for i, player in enumerate(rotated_players):
+                    actionInfo = player['bets']['turn']
+                    prompt += f"\n- 位置：{player['position_name']}, 玩家姓名：{player['name']}, 行动：{actionInfo}"
+
+            elif stage == 'river':
+                prompt += "\n翻前下注"
+                for i, player in enumerate(rotated_players):
+                    actionInfo = player['bets']['preflop']
+                    prompt += f"\n- 位置：{player['position_name']}, 玩家姓名：{player['name']}, 行动：{actionInfo}"
+                prompt += "\n\n翻牌后下注"
+                for i, player in enumerate(rotated_players):
+                    actionInfo = player['bets']['flop']
+                    prompt += f"\n- 位置：{player['position_name']}, 玩家姓名：{player['name']}, 行动：{actionInfo}"
+                prompt += "\n\n转牌后下注"
+                for i, player in enumerate(rotated_players):
+                    actionInfo = player['bets']['turn']
+                    prompt += f"\n- 位置：{player['position_name']}, 玩家姓名：{player['name']}, 行动：{actionInfo}"
+                prompt += "\n\n河牌后下注"
+                for i, player in enumerate(rotated_players):
+                    actionInfo = player['bets']['river']
+                    prompt += f"\n- 位置：{player['position_name']}, 玩家姓名：{player['name']}, 行动：{actionInfo}"
+
+
 
             prompt += "\n\n5. 现在行动到我，我应该怎么做？"
 
@@ -253,7 +352,10 @@ class PokerService:
 1. 这手牌在当前位置的打法建议
 2. 考虑其他玩家的筹码深度，建议的加注尺度
 3. 需要注意的关键点
-4. 如果遇到加注或反加注，应该如何应对"""
+4. 如果遇到加注或反加注，应该如何应对
+
+最终总结，给我一个明确的行动。如果是下注，基于当前的底池大小，告诉我要下注多少？
+"""
 
             self.isNewHand = False
             return prompt
