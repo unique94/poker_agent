@@ -363,10 +363,41 @@ class PokerService:
 """
 
             self.isNewHand = False
+
+            # 在返回prompt之前，保存到日志文件
+            self._save_prompt_to_log(prompt, stage)
+            
             return prompt
 
         except Exception as e:
-            raise Exception(f"生成 prompt 时出错: {str(e)}") 
+            raise Exception(f"生成 prompt 时出错: {str(e)}")
+
+    def _save_prompt_to_log(self, prompt, stage):
+        """
+        将prompt保存到日志文件
+        
+        Args:
+            prompt (str): 要保存的prompt
+            stage (str): 当前游戏阶段
+        """
+        try:
+            # 创建logs目录（如果不存在）
+            if not os.path.exists('logs'):
+                os.makedirs('logs')
+            
+            # 使用固定的日志文件名
+            filename = 'logs/poker_prompts.log'
+            
+            # 追加模式写入日志文件
+            with open(filename, 'a', encoding='utf-8') as f:
+                f.write("\n" + "="*80 + "\n")
+                f.write(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"Stage: {stage}\n")
+                f.write("-"*80 + "\n")
+                f.write(prompt + "\n")
+            
+        except Exception as e:
+            print(f"保存prompt到日志文件时出错: {str(e)}")
 
     def reset_game(self):
         """
