@@ -248,16 +248,23 @@ class PokerService:
                         
 
             main_player_new_idx = player_count - sb_player_idx
-            print(main_player_new_idx)
+            print(f"主玩家位置：{main_player_new_idx}")
+            name = rotated_players[main_player_new_idx]['name']
             
             # 构建场景描述
             if (self.isNewHand):
                 prompt = f"""我希望你扮演一个经验老道的德州扑克职业玩家，参与我们的带有娱乐性质的德州扑克现金局。
-我们参与的玩家有一个特点，非常喜欢limp进来看翻牌。4倍以下的加注大多数都是无效的，大家都会call。而且因为你的加入，大家都知道你是AI玩家，大家会更多的bluff你。
+以下是一些牌局信息：
+1. 参与的玩家有一个特点，在翻牌前，大家非常喜欢limp。翻前行动4倍以下的加注大多数都是无效的，大家都会call。
+2. 参与的玩家在河牌的行动会相对保守，在河牌阶段，大尺度的bluff行为会相对较少。
+3. 因为有你的加入，大家都知道你是AI玩家，大家可能会更多的bluff你。
+
 我希望你能采取正确的策略，剥削其他玩家，赢得游戏。
+
 现在的游戏人数是：{player_count}人：
 
 1. 基本信息：
+- 你扮演的玩家姓名：{name}
 - 你的位置：{rotated_players[main_player_new_idx]['position_name']}
 - 你的筹码：{rotated_players[main_player_new_idx]['chips']}
 - 你的底牌：{rotated_players[main_player_new_idx]['holeCards']['card1']} {rotated_players[main_player_new_idx]['holeCards']['card2']}
@@ -342,13 +349,11 @@ class PokerService:
 
 
 
-            prompt += "\n\n5. 现在行动到我，我应该怎么做？"
+            prompt += f"\n\n5. 你扮演的玩家姓名是：{name}，现在行动到你，应该怎么做？"
 
             # 添加提问
             if (self.isNewHand):
-                prompt += """
-
-请根据以上信息，给出详细的策略建议，包括：
+                prompt += """\n\n请根据以上信息，给出详细的策略建议，包括：
 1. 这手牌在当前位置的打法建议
 2. 考虑其他玩家的筹码深度，建议的加注尺度
 3. 需要注意的关键点

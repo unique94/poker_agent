@@ -368,22 +368,8 @@ function displayAdvice(adviceData) {
     placeholder.style.display = 'none';
     resultDiv.style.display = 'block';
     
-    // 将返回的 prompt 文本按主要部分分割
-    const sections = adviceData.prompt.split('\n\n请根据以上信息');
-    
-    // 场景分析部分 (第一部分：所有场景信息)
-    const sceneAnalysis = sections[0];
-    resultDiv.querySelector('.scene-analysis').textContent = sceneAnalysis;
-    
-    // 策略建议部分 (第二部分：建议部分)
-    // 提取建议列表并格式化
-    const suggestions = sections[1]
-        .replace('，给出详细的策略建议，包括：\n', '')  // 移除前缀文本
-        .split('\n')  // 按行分割
-        .filter(line => line.trim())  // 移除空行
-        .join('\n\n');  // 重新组合，在每个建议之间添加空行
-    
-    resultDiv.querySelector('.strategy-suggestion').textContent = suggestions;
+    // 直接显示完整的建议内容
+    resultDiv.querySelector('.scene-analysis').textContent = adviceData.prompt;
     
     // 滚动到建议区域
     adviceContent.scrollIntoView({ behavior: 'smooth', block: 'start' });

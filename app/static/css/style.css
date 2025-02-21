@@ -554,4 +554,24 @@ button:disabled {
 
 .reset-button {
     margin-top: 0;    /* 移除之前可能存在的顶部间距 */
+}
+
+/* 卡牌相关样式 */
+.suit-btn[data-suit="♥"],
+.suit-btn[data-suit="♦"],
+input.card-input[value^="♥"],
+input.card-input[value^="♦"] {
+    color: #ff0000;
+}
+
+.suit-btn[data-suit="♠"],
+.suit-btn[data-suit="♣"],
+input.card-input[value^="♠"],
+input.card-input[value^="♣"] {
+    color: #000000;
+}
+
+.card-input {
+    font-weight: bold;
+    font-size: 16px;
 } 
